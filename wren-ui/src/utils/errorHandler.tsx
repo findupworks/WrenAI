@@ -1,5 +1,8 @@
+// biome-ignore lint/style/useImportType: <explanation>
 import { GraphQLError } from 'graphql';
+// biome-ignore lint/style/useImportType: <explanation>
 import { ErrorResponse } from '@apollo/client/link/error';
+// biome-ignore lint/style/useImportType: <explanation>
 import { ApolloError } from '@apollo/client';
 import { message } from 'antd';
 
@@ -152,6 +155,7 @@ class UpdateDataSourceErrorHandler extends ErrorHandler {
     switch (error.extensions?.code) {
       default:
         return replaceMessage(
+          // biome-ignore lint/style/noUnusedTemplateLiteral: <explanation>
           `Failed to update %{data source}.`,
           error.message,
         );
@@ -441,7 +445,7 @@ const errorHandler = (error: ErrorResponse) => {
   const operationName = error?.operation?.operationName || '';
   if (error.graphQLErrors) {
     for (const err of error.graphQLErrors) {
-      errorHandlers.get(operationName)?.handle(err);
+      errorHandlers.get(operationName)?.handle(err as GraphQLError);
     }
   }
 };
@@ -450,12 +454,15 @@ export default errorHandler;
 
 export const parseGraphQLError = (error: ApolloError) => {
   if (!error) return null;
-  const graphQLErrors: GraphQLError = error.graphQLErrors?.[0];
-  const extensions = graphQLErrors?.extensions || {};
-  return {
-    message: extensions.message as string,
-    shortMessage: extensions.shortMessage as string,
-    code: extensions.code as string,
-    stacktrace: extensions?.stacktrace as Array<string> | undefined,
-  };
+  if (Array.isArray(error.graphQLErrors)) {
+    const graphQLErrors = error.graphQLErrors[0];
+    const extensions = graphQLErrors?.extensions || {};
+    return {
+      message: extensions.message as string,
+      shortMessage: extensions.shortMessage as string,
+      code: extensions.code as string,
+      stacktrace: extensions?.stacktrace as Array<string> | undefined,
+    };
+  }
+  return null;
 };
